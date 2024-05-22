@@ -1,26 +1,38 @@
 import discord
 import asyncio
+from PyQt5.QtWidgets import QApplication
+from gui import ServerCloneGUI
 from serverclone import Clone
 
-client = discord.Client()
+class DiscordCloner(discord.Client):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.token = None
+        self.input_guild_id = None
+        self.output_guild_id = None
 
-token = input('\n[>]  Enter your Discord token: ')
-guild_s = input('\n[>]  Server to Copy ID: ')
-guild = input('\n[>]  Your Server ID: ')
-input_guild_id = guild_s
-output_guild_id = guild
+    async def on_ready(self):
+        print('Logged on as', self.user)
+        await self.run_clone()
 
-@client.event
-async def on_ready():
-    guild_from = client.get_guild(int(input_guild_id))
-    guild_to = client.get_guild(int(output_guild_id))
-    await Clone.guild_edit(guild_to, guild_from)
-    await Clone.roles_delete(guild_to)
-    await Clone.channels_delete(guild_to)
-    await Clone.roles_create(guild_to, guild_from)
-    await Clone.categories_create(guild_to, guild_from)
-    await Clone.channels_create(guild_to, guild_from)
-    await asyncio.sleep(5)
-    await client.close()
+    async def run_clone(self):
+        guild_from = self.get_guild(int(self.input_guild_id))
+        guild_to = self.get_guild(int(self.output_guild_id))
+        await Clone.guild_edit(guild_to, guild_from)
+        await Clone.roles_delete(guild_to)
+        await Clone.channels_delete(guild_to)
+        await Clone.roles_create(guild_to, guild_from)
+        await Clone.categories_create(guild_to, guild_from)
+        await Clone.channels_create(guild_to, guild_from)
+        await asyncio.sleep(5)
+        await self.close()
 
-client.run(token)
+def main():
+    client = DiscordCloner()
+    app = QApplication([])
+    gui = ServerCloneGUI(client)
+    gui.show()
+    app.exec_()
+
+if __name__ == "__main__":
+    main()
